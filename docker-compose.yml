@@ -1,0 +1,50 @@
+version: "3.3"
+services:
+  tweet-app-client:
+    container_name: tweet-app-client
+    build:
+      context: ../tweet-app-react-frontend/
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../tweet-app-react-frontend:/app
+      - /app/node_modules
+
+  tweet-app-db:
+    image: "mongo:4.4.3"
+    container_name: tweet-app-db
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - tweet-app-db-volume:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME:
+      MONGO_INITDB_ROOT_PASSWORD:
+
+  tweet-app-service:
+    container_name: tweet-app-service
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: "dev"
+      WAIT_HOSTS: tweet-app-db:27017
+      spring.data.mongodb.uri: mongodb://tweet-app-db/tweet-app
+      logging.level.com.tweetapp: debug
+      management.application.name: "tweet_app_api_service"
+      management.endpoint.health.show-details: always
+      management.endpoint.metrics.enabled: true
+      management.endpoints.enabled-by-default: true
+    depends_on:
+      - tweet-app-db
+
+volumes:
+  tweet-app-db-volume:
+
+
+
